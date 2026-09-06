@@ -613,6 +613,9 @@ class MainActivity : ComponentActivity() {
                     toast("Search is not built yet")
                 }
             }
+            // LT/RT page the persistent tab bar in the redesigned UI (see
+            // org.harbor.ui.mock) - this screen has no tab bar yet.
+            Nav.PREV_TAB, Nav.NEXT_TAB -> {}
         }
     }
 

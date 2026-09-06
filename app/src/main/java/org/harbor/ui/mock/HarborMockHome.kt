@@ -4,6 +4,7 @@ package org.harbor.ui.mock
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -58,7 +60,7 @@ import dev.chrisbanes.haze.hazeChild
  * once more vertical space is actually available, and is capped so a very tall display doesn't
  * blow proportions out.
  */
-private class Scale(availableHeight: Dp) {
+class Scale(availableHeight: Dp) {
     val factor: Float = (availableHeight.value / REFERENCE_HEIGHT.value).coerceIn(1f, MAX_FACTOR)
 
     fun dp(value: Int): Dp = (value * factor).dp
@@ -70,12 +72,77 @@ private class Scale(availableHeight: Dp) {
     }
 }
 
+internal val amber = Color(0xFFFFB74D)
+
 /**
- * First visual mockup of Harbor's Home screen: iOS 26 Games-app layout rhythm
- * (hero carousel -> icon shelf -> floating glass tab bar) over LightHouse's
- * true-black ground, using androidx.tv for D-pad focus and Haze for the
- * frosted-glass tab bar. Sample data only - not wired to the real library.
+ * Shared host for every Harbor screen: the persistent glass tab bar (Home/Library/Settings,
+ * paged with LT/RT) lives here, not inside any one screen, so it can never be present on one
+ * screen and missing on another. Screens render as [navState.tab] changes; the bar and its
+ * LT/RT badges never disappear.
  */
+@Composable
+fun HarborScaffold(navState: HarborNavState) {
+    val hazeState = remember { HazeState() }
+
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+    ) {
+        val scale = remember(maxHeight) { Scale(maxHeight) }
+
+        Box(
+            Modifier
+                .fillMaxSize()
+                .haze(state = hazeState),
+        ) {
+            when (navState.tab) {
+                HarborTab.HOME -> HomeContent(scale)
+                HarborTab.LIBRARY -> LibraryContent(scale, navState)
+                HarborTab.SETTINGS -> SettingsContent(scale)
+            }
+        }
+
+        Row(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(bottom = scale.dp(28), start = scale.dp(24), end = scale.dp(24)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        ) {
+            TriggerBadge("LT", scale, onClick = navState::prevTab)
+            Spacer(Modifier.width(scale.dp(12)))
+            GlassTabBar(hazeState, scale, navState)
+            Spacer(Modifier.width(scale.dp(12)))
+            TriggerBadge("RT", scale, onClick = navState::nextTab)
+        }
+    }
+}
+
+/** A small circular shoulder-button/trigger affordance - LT/RT flank the tab bar, LB/RB flank Library's console bar. Tappable too, so touch has full parity with the pad. */
+@Composable
+internal fun TriggerBadge(label: String, scale: Scale, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = ClickableSurfaceDefaults.shape(shape = CircleShape),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color.White.copy(alpha = 0.10f),
+            focusedContainerColor = amber.copy(alpha = 0.35f),
+        ),
+    ) {
+        Box(
+            Modifier
+                .size(scale.dp(40))
+                .border(1.dp, Color.White.copy(alpha = 0.22f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(label, color = Color.White.copy(alpha = 0.85f), fontSize = scale.sp(11), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
 private data class MockGame(val title: String, val subtitle: String, val gradient: List<Color>)
 
 private val heroGames = listOf(
@@ -88,38 +155,14 @@ private val continueGames = listOf(
     "Halo 3", "NFS: Carbon", "NFS: Most Wanted", "Ninja Gaiden II", "Gears of War", "Forza 2",
 )
 
-private val amber = Color(0xFFFFB74D)
-
 @Composable
-fun HarborMockHome() {
-    val hazeState = remember { HazeState() }
+private fun HomeContent(scale: Scale) {
     val pagerState = rememberPagerState(pageCount = { heroGames.size })
-
-    BoxWithConstraints(
-        Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-    ) {
-        val scale = remember(maxHeight) { Scale(maxHeight) }
-
-        Column(
-            Modifier
-                .fillMaxSize()
-                .haze(state = hazeState),
-        ) {
-            HeroCarousel(pagerState, scale)
-            Spacer(Modifier.height(scale.dp(16)))
-            ContinuePlayingShelf(scale)
-            Spacer(Modifier.height(scale.dp(64)))
-        }
-
-        GlassTabBar(
-            hazeState = hazeState,
-            scale = scale,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = scale.dp(28)),
-        )
+    Column(Modifier.fillMaxSize()) {
+        HeroCarousel(pagerState, scale)
+        Spacer(Modifier.height(scale.dp(16)))
+        ContinuePlayingShelf(scale)
+        Spacer(Modifier.height(scale.dp(64)))
     }
 }
 
@@ -235,9 +278,9 @@ private fun ContinuePlayingShelf(scale: Scale) {
 }
 
 @Composable
-private fun GlassTabBar(hazeState: HazeState, scale: Scale, modifier: Modifier = Modifier) {
+private fun GlassTabBar(hazeState: HazeState, scale: Scale, navState: HarborNavState) {
     Row(
-        modifier
+        Modifier
             .clip(RoundedCornerShape(50))
             .hazeChild(
                 state = hazeState,
@@ -251,18 +294,19 @@ private fun GlassTabBar(hazeState: HazeState, scale: Scale, modifier: Modifier =
             .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(50))
             .padding(horizontal = scale.dp(8), vertical = scale.dp(6)),
     ) {
-        TabItem(icon = Icons.Filled.Home, label = "Home", selected = true, scale = scale)
+        TabItem(Icons.Filled.Home, "Home", navState.tab == HarborTab.HOME, scale) { navState.selectTab(HarborTab.HOME) }
         Spacer(Modifier.width(scale.dp(4)))
-        TabItem(icon = Icons.Filled.VideogameAsset, label = "Library", selected = false, scale = scale)
+        TabItem(Icons.Filled.VideogameAsset, "Library", navState.tab == HarborTab.LIBRARY, scale) { navState.selectTab(HarborTab.LIBRARY) }
         Spacer(Modifier.width(scale.dp(4)))
-        TabItem(icon = Icons.Filled.Settings, label = "Settings", selected = false, scale = scale)
+        TabItem(Icons.Filled.Settings, "Settings", navState.tab == HarborTab.SETTINGS, scale) { navState.selectTab(HarborTab.SETTINGS) }
     }
 }
 
 @Composable
-private fun TabItem(icon: ImageVector, label: String, selected: Boolean, scale: Scale) {
+private fun TabItem(icon: ImageVector, label: String, selected: Boolean, scale: Scale, onClick: () -> Unit) {
     Surface(
-        onClick = {},
+        onClick = onClick,
+        modifier = Modifier.clickable(onClick = onClick),
         shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(50)),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = if (selected) amber.copy(alpha = 0.22f) else Color.Transparent,
