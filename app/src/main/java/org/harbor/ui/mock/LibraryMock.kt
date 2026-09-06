@@ -130,13 +130,16 @@ private fun ConsoleBar(scale: Scale, navState: HarborNavState) {
 
 @Composable
 private fun ConsolePill(name: String, selected: Boolean, scale: Scale, onClick: () -> Unit) {
+    val pillShape = RoundedCornerShape(50)
     Surface(
         onClick = onClick,
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(50)),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .let { if (selected) it.frostedSelection(pillShape) else it },
+        shape = ClickableSurfaceDefaults.shape(shape = pillShape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (selected) amber.copy(alpha = 0.22f) else Color.Transparent,
-            focusedContainerColor = amber.copy(alpha = 0.35f),
+            containerColor = Color.Transparent,
+            focusedContainerColor = amber.copy(alpha = 0.3f),
         ),
     ) {
         Text(

@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -73,6 +74,23 @@ class Scale(availableHeight: Dp) {
 }
 
 internal val amber = Color(0xFFFFB74D)
+
+/**
+ * A selected pill/tab's background: a light frost tinted amber, rather than a flat fill.
+ *
+ * Not a real Haze blur - a hazeChild can't be a descendant of the haze() source it would need
+ * to read (the whole screen content, here), and nesting one glass blur inside another bar that's
+ * already blurring its own background would be redundant anyway. A soft white-to-amber gradient
+ * plus a thin lit edge reads as "frosted" without it.
+ */
+internal fun Modifier.frostedSelection(shape: Shape): Modifier = this
+    .clip(shape)
+    .background(
+        Brush.verticalGradient(
+            listOf(Color.White.copy(alpha = 0.18f), amber.copy(alpha = 0.16f)),
+        ),
+    )
+    .border(1.dp, amber.copy(alpha = 0.4f), shape)
 
 /**
  * Shared host for every Harbor screen: the persistent glass tab bar (Home/Library/Settings,
@@ -304,13 +322,16 @@ private fun GlassTabBar(hazeState: HazeState, scale: Scale, navState: HarborNavS
 
 @Composable
 private fun TabItem(icon: ImageVector, label: String, selected: Boolean, scale: Scale, onClick: () -> Unit) {
+    val pillShape = RoundedCornerShape(50)
     Surface(
         onClick = onClick,
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(50)),
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .let { if (selected) it.frostedSelection(pillShape) else it },
+        shape = ClickableSurfaceDefaults.shape(shape = pillShape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = if (selected) amber.copy(alpha = 0.22f) else Color.Transparent,
-            focusedContainerColor = amber.copy(alpha = 0.35f),
+            containerColor = Color.Transparent,
+            focusedContainerColor = amber.copy(alpha = 0.3f),
         ),
     ) {
         Row(
