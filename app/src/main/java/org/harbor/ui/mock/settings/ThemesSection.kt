@@ -1,5 +1,7 @@
 package org.harbor.ui.mock.settings
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -23,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -49,6 +53,7 @@ object ThemesSection : SettingsSection {
         modifier: Modifier,
     ) {
         val app = HarborApp.instance
+        val context = LocalContext.current
         val loaded = remember { app.colors.load() }
         // Not remembered: this must re-read after every onThemeChanged() so the checkmark moves
         // immediately. This panel stays in composition across that recomposition (only the
@@ -58,13 +63,29 @@ object ThemesSection : SettingsSection {
 
         Column(modifier) {
             PanelHeading("Color Theme", "Same theme files as LightHouse - drop a .theme into themes/colors to add more.", scale)
-            Row(Modifier.padding(start = scale.dp(32), bottom = scale.dp(16))) {
+            Column(Modifier.padding(start = scale.dp(32), bottom = scale.dp(16))) {
                 ActionRow(
                     icon = Icons.Filled.FileOpen,
                     label = "Add a theme from a file",
                     detail = "Pick a .theme file you wrote - Downloads, a USB stick, anywhere",
                     scale = scale,
                     onClick = onImportTheme,
+                )
+                Spacer(Modifier.height(scale.dp(8)))
+                ActionRow(
+                    icon = Icons.Filled.OpenInNew,
+                    label = "Open Cove to make a theme",
+                    detail = "A live color-wheel editor with a preview of this screen",
+                    scale = scale,
+                    onClick = { openOtherApp(context, "org.cove") },
+                )
+                Spacer(Modifier.height(scale.dp(8)))
+                ActionRow(
+                    icon = Icons.Filled.OpenInNew,
+                    label = "Open LightHouse",
+                    detail = null,
+                    scale = scale,
+                    onClick = { openOtherApp(context, "org.lighthouse") },
                 )
             }
             LazyColumn(contentPadding = PaddingValues(start = scale.dp(32), end = scale.dp(32), top = scale.dp(4), bottom = scale.dp(96))) {
@@ -82,6 +103,18 @@ object ThemesSection : SettingsSection {
                 }
             }
         }
+    }
+}
+
+/** Launches another one of these companion apps by package - tries the release id, then the
+ * ".debug" variant, since these are sideloaded and either could be the one installed. */
+private fun openOtherApp(context: Context, releasePackage: String) {
+    val intent = context.packageManager.getLaunchIntentForPackage(releasePackage)
+        ?: context.packageManager.getLaunchIntentForPackage("$releasePackage.debug")
+    if (intent != null) {
+        context.startActivity(intent)
+    } else {
+        Toast.makeText(context, "Not installed on this device", Toast.LENGTH_SHORT).show()
     }
 }
 

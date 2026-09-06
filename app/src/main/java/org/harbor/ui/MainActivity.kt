@@ -160,6 +160,14 @@ class MainActivity : ComponentActivity() {
             .onFailure { toast("No file picker available on this device") }
     }
 
+    /** Launches another one of these companion apps by package - tries the release id, then the
+     * ".debug" variant, since these are sideloaded and either could be the one installed. */
+    private fun openOtherApp(releasePackage: String) {
+        val intent = packageManager.getLaunchIntentForPackage(releasePackage)
+            ?: packageManager.getLaunchIntentForPackage("$releasePackage.debug")
+        if (intent != null) startActivity(intent) else toast("Not installed on this device")
+    }
+
     private val folderPicker = registerForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -1258,6 +1266,7 @@ class MainActivity : ComponentActivity() {
         override fun openColorFolder() {
             toast("Colour themes live in " + app.colors.dir.absolutePath)
         }
+        override fun openOtherApp(releasePackage: String) = this@MainActivity.openOtherApp(releasePackage)
     }
 
     // ---- settings -----------------------------------------------------------

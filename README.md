@@ -9,8 +9,19 @@ the device, not waiting for a new release.
 
 ![The home screen](docs/images/home.png)
 
+## Companion apps
+
+- **[Cove](https://github.com/r0mn-creator/Cove)** — a live colour-wheel theme
+  editor with a preview of the actual home screen, for writing `.theme` files
+  without hand-editing text. Open it directly from **Settings > Themes >
+  Colours > Open Cove to make a theme**.
+- **[LH Game Launcher](https://github.com/r0mn-creator/LH-Game-Launcher)** — the
+  original console-style launcher this fork is based on, reading the same
+  `.theme` files.
+
 ## Contents
 
+- [Companion apps](#companion-apps)
 - [Install](#install)
 - [Setting up your library](#setting-up-your-library)
 - [Colour themes](#colour-themes)

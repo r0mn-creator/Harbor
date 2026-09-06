@@ -36,6 +36,7 @@ class MenuTree(
         fun pickColorTheme(name: String?)
         fun importColorTheme()
         fun openColorFolder()
+        fun openOtherApp(releasePackage: String)
     }
 
     fun nodeFor(path: List<String>): MenuNode = when {
@@ -298,6 +299,13 @@ class MenuTree(
             })
             add(MenuItem.Action("Where these live", "Folder path, for adb or a rooted file manager") {
                 actions.openColorFolder()
+            })
+            add(MenuItem.Action("Open Cove to make a theme",
+                "A live color-wheel editor with a preview of this screen") {
+                actions.openOtherApp("org.cove")
+            })
+            add(MenuItem.Action("Open LightHouse", null) {
+                actions.openOtherApp("org.lighthouse")
             })
             state.colorProblems.forEach { (f, why) ->
                 add(MenuItem.Note(f, why))
