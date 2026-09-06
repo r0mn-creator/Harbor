@@ -5,20 +5,35 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import org.harbor.HarborApp
+import org.harbor.theme.LocalTheme
 import org.harbor.ui.GamepadNav
 import org.harbor.ui.Nav
 
 /** Debug-only host for [HarborScaffold], launched directly via adb for design review. */
 class MockHomeActivity : ComponentActivity() {
     private val navState = HarborNavState()
+    private var colorEpoch by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         immersive()
-        setContent { HarborScaffold(navState) }
+        setContent {
+            // Same pattern as MainActivity: re-read on every colorEpoch bump so picking a
+            // theme in Settings applies immediately, not after a restart.
+            val theme = remember(colorEpoch) { HarborApp.instance.activeColors() }
+            CompositionLocalProvider(LocalTheme provides theme) {
+                HarborScaffold(navState, onThemeChanged = { colorEpoch++ })
+            }
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

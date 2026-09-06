@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import org.harbor.theme.LocalTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,24 +74,28 @@ class Scale(availableHeight: Dp) {
     }
 }
 
-internal val amber = Color(0xFFFFB74D)
-
 /**
- * A selected pill/tab's background: a light frost tinted amber, rather than a flat fill.
+ * A selected pill/tab's background: a light frost tinted with the active theme's accent colour
+ * (the same "--highlight" role LightHouse's own .theme files already use), rather than a flat
+ * fill.
  *
  * Not a real Haze blur - a hazeChild can't be a descendant of the haze() source it would need
  * to read (the whole screen content, here), and nesting one glass blur inside another bar that's
- * already blurring its own background would be redundant anyway. A soft white-to-amber gradient
+ * already blurring its own background would be redundant anyway. A soft white-to-accent gradient
  * plus a thin lit edge reads as "frosted" without it.
  */
-internal fun Modifier.frostedSelection(shape: Shape): Modifier = this
-    .clip(shape)
-    .background(
-        Brush.verticalGradient(
-            listOf(Color.White.copy(alpha = 0.18f), amber.copy(alpha = 0.16f)),
-        ),
-    )
-    .border(1.dp, amber.copy(alpha = 0.4f), shape)
+@Composable
+internal fun Modifier.frostedSelection(shape: Shape): Modifier {
+    val accent = LocalTheme.current.accent
+    return this
+        .clip(shape)
+        .background(
+            Brush.verticalGradient(
+                listOf(Color.White.copy(alpha = 0.18f), accent.copy(alpha = 0.16f)),
+            ),
+        )
+        .border(1.dp, accent.copy(alpha = 0.4f), shape)
+}
 
 /**
  * Shared host for every Harbor screen: the persistent glass tab bar (Home/Library/Settings,
@@ -99,13 +104,14 @@ internal fun Modifier.frostedSelection(shape: Shape): Modifier = this
  * LT/RT badges never disappear.
  */
 @Composable
-fun HarborScaffold(navState: HarborNavState) {
+fun HarborScaffold(navState: HarborNavState, onThemeChanged: () -> Unit) {
     val hazeState = remember { HazeState() }
+    val theme = LocalTheme.current
 
     BoxWithConstraints(
         Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(theme.background),
     ) {
         val scale = remember(maxHeight) { Scale(maxHeight) }
 
@@ -117,7 +123,7 @@ fun HarborScaffold(navState: HarborNavState) {
             when (navState.tab) {
                 HarborTab.HOME -> HomeContent(scale)
                 HarborTab.LIBRARY -> LibraryContent(scale, navState)
-                HarborTab.SETTINGS -> SettingsContent(scale)
+                HarborTab.SETTINGS -> SettingsContent(scale, onThemeChanged)
             }
         }
 
@@ -147,7 +153,7 @@ internal fun TriggerBadge(label: String, scale: Scale, onClick: () -> Unit) {
         shape = ClickableSurfaceDefaults.shape(shape = CircleShape),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.10f),
-            focusedContainerColor = amber.copy(alpha = 0.35f),
+            focusedContainerColor = LocalTheme.current.accent.copy(alpha = 0.35f),
         ),
     ) {
         Box(
@@ -256,10 +262,11 @@ private fun GlassPillButton(scale: Scale) {
 
 @Composable
 private fun ContinuePlayingShelf(scale: Scale) {
+    val theme = LocalTheme.current
     Column {
         Text(
             "Continue Playing",
-            color = Color.White.copy(alpha = 0.9f),
+            color = theme.textPrimary,
             fontWeight = FontWeight.SemiBold,
             fontSize = scale.sp(16),
             modifier = Modifier.padding(start = scale.dp(40), bottom = scale.dp(10)),
@@ -273,8 +280,8 @@ private fun ContinuePlayingShelf(scale: Scale) {
                         onClick = {},
                         shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp)),
                         colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color.White.copy(alpha = 0.08f),
-                            focusedContainerColor = amber.copy(alpha = 0.9f),
+                            containerColor = theme.surfaceVariant,
+                            focusedContainerColor = theme.accent.copy(alpha = 0.9f),
                         ),
                         modifier = Modifier.size(scale.dp(96)),
                     ) {
@@ -282,13 +289,13 @@ private fun ContinuePlayingShelf(scale: Scale) {
                             Icon(
                                 Icons.Filled.VideogameAsset,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = theme.textPrimary,
                                 modifier = Modifier.size(scale.dp(24)),
                             )
                         }
                     }
                     Spacer(Modifier.height(scale.dp(6)))
-                    Text(title, color = Color.White.copy(alpha = 0.8f), fontSize = scale.sp(12))
+                    Text(title, color = theme.textSecondary, fontSize = scale.sp(12))
                 }
             }
         }
@@ -323,6 +330,7 @@ private fun GlassTabBar(hazeState: HazeState, scale: Scale, navState: HarborNavS
 @Composable
 private fun TabItem(icon: ImageVector, label: String, selected: Boolean, scale: Scale, onClick: () -> Unit) {
     val pillShape = RoundedCornerShape(50)
+    val accent = LocalTheme.current.accent
     Surface(
         onClick = onClick,
         modifier = Modifier
@@ -331,7 +339,7 @@ private fun TabItem(icon: ImageVector, label: String, selected: Boolean, scale: 
         shape = ClickableSurfaceDefaults.shape(shape = pillShape),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.Transparent,
-            focusedContainerColor = amber.copy(alpha = 0.3f),
+            focusedContainerColor = accent.copy(alpha = 0.3f),
         ),
     ) {
         Row(
@@ -340,11 +348,11 @@ private fun TabItem(icon: ImageVector, label: String, selected: Boolean, scale: 
             Icon(
                 icon,
                 contentDescription = null,
-                tint = if (selected) amber else Color.White.copy(alpha = 0.7f),
+                tint = if (selected) accent else Color.White.copy(alpha = 0.7f),
                 modifier = Modifier.size(scale.dp(18)),
             )
             Spacer(Modifier.width(scale.dp(6)))
-            Text(label, color = if (selected) amber else Color.White.copy(alpha = 0.7f), fontSize = scale.sp(13))
+            Text(label, color = if (selected) accent else Color.White.copy(alpha = 0.7f), fontSize = scale.sp(13))
         }
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import org.harbor.theme.LocalTheme
 
 internal data class MockConsole(val name: String, val games: List<String>)
 
@@ -52,7 +53,7 @@ internal fun LibraryContent(scale: Scale, navState: HarborNavState) {
         Spacer(Modifier.height(scale.dp(24)))
         Text(
             console.name,
-            color = Color.White.copy(alpha = 0.9f),
+            color = LocalTheme.current.textPrimary,
             fontWeight = FontWeight.SemiBold,
             fontSize = scale.sp(16),
             modifier = Modifier.padding(start = scale.dp(40), bottom = scale.dp(10)),
@@ -71,13 +72,14 @@ internal fun LibraryContent(scale: Scale, navState: HarborNavState) {
 
 @Composable
 private fun GameCell(title: String, scale: Scale) {
+    val theme = LocalTheme.current
     Column {
         Surface(
             onClick = {},
             shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
             colors = ClickableSurfaceDefaults.colors(
-                containerColor = Color.White.copy(alpha = 0.08f),
-                focusedContainerColor = amber.copy(alpha = 0.9f),
+                containerColor = theme.surfaceVariant,
+                focusedContainerColor = theme.accent.copy(alpha = 0.9f),
             ),
             modifier = Modifier.fillMaxWidth().size(scale.dp(84)),
         ) {
@@ -85,13 +87,13 @@ private fun GameCell(title: String, scale: Scale) {
                 Icon(
                     Icons.Filled.VideogameAsset,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = theme.textPrimary,
                     modifier = Modifier.size(scale.dp(22)),
                 )
             }
         }
         Spacer(Modifier.height(scale.dp(6)))
-        Text(title, color = Color.White.copy(alpha = 0.8f), fontSize = scale.sp(11), maxLines = 1)
+        Text(title, color = theme.textSecondary, fontSize = scale.sp(11), maxLines = 1)
     }
 }
 
@@ -131,6 +133,7 @@ private fun ConsoleBar(scale: Scale, navState: HarborNavState) {
 @Composable
 private fun ConsolePill(name: String, selected: Boolean, scale: Scale, onClick: () -> Unit) {
     val pillShape = RoundedCornerShape(50)
+    val accent = LocalTheme.current.accent
     Surface(
         onClick = onClick,
         modifier = Modifier
@@ -139,12 +142,12 @@ private fun ConsolePill(name: String, selected: Boolean, scale: Scale, onClick: 
         shape = ClickableSurfaceDefaults.shape(shape = pillShape),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.Transparent,
-            focusedContainerColor = amber.copy(alpha = 0.3f),
+            focusedContainerColor = accent.copy(alpha = 0.3f),
         ),
     ) {
         Text(
             name,
-            color = if (selected) amber else Color.White.copy(alpha = 0.7f),
+            color = if (selected) accent else Color.White.copy(alpha = 0.7f),
             fontSize = scale.sp(13),
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.padding(horizontal = scale.dp(14), vertical = scale.dp(8)),
