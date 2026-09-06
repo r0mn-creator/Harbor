@@ -36,9 +36,13 @@ import org.harbor.theme.LocalTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -144,7 +148,16 @@ fun HarborScaffold(navState: HarborNavState, onThemeChanged: () -> Unit) {
     }
 }
 
-/** A small circular shoulder-button/trigger affordance - LT/RT flank the tab bar, LB/RB flank Library's console bar. Tappable too, so touch has full parity with the pad. */
+/**
+ * A small circular shoulder-button/trigger affordance - LT/RT flank the tab bar, LB/RB flank
+ * Library's console bar. Tappable too, so touch has full parity with the pad.
+ *
+ * Styled to actually read as glass rather than a flat translucent chip: an off-centre radial
+ * glow (the "light source" sits up and to the left, like the reference render) plus a diagonal
+ * rim that's bright where the light grazes the edge and dark where it doesn't - not a real Haze
+ * blur, since this composable is also used inside Library's already-hazed content (ConsoleBar's
+ * LB/RB), where a hazeChild would hit the same descendant-of-haze crash documented above.
+ */
 @Composable
 internal fun TriggerBadge(label: String, scale: Scale, onClick: () -> Unit) {
     Surface(
@@ -152,18 +165,60 @@ internal fun TriggerBadge(label: String, scale: Scale, onClick: () -> Unit) {
         modifier = Modifier.clickable(onClick = onClick),
         shape = ClickableSurfaceDefaults.shape(shape = CircleShape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.10f),
+            containerColor = Color.Transparent,
             focusedContainerColor = LocalTheme.current.accent.copy(alpha = 0.35f),
         ),
     ) {
         Box(
             Modifier
                 .size(scale.dp(40))
-                .border(1.dp, Color.White.copy(alpha = 0.22f), CircleShape),
+                .glassSurface(),
             contentAlignment = Alignment.Center,
         ) {
-            Text(label, color = Color.White.copy(alpha = 0.85f), fontSize = scale.sp(11), fontWeight = FontWeight.Bold)
+            Text(label, color = Color.White.copy(alpha = 0.9f), fontSize = scale.sp(11), fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+/**
+ * Real glass, not a flat translucent fill: an off-centre radial glow (the light sits up and to
+ * the left, like Apple's own Liquid Glass reference renders) plus a diagonal rim that's bright
+ * where the light grazes the edge and dark where it doesn't. Every call site here is a circle or
+ * a fully-rounded pill, so a single corner radius of half the shorter side (correct for both)
+ * covers it without needing to inspect the actual Shape.
+ *
+ * Not a real Haze blur: several call sites (Library's LB/RB) live inside content already marked
+ * `.haze()`, and a hazeChild can't be a descendant of the haze() source it would read from - see
+ * the crash documented above. This fakes the same "light passing through glass" read with a
+ * static gradient instead.
+ */
+internal fun Modifier.glassSurface(): Modifier = this.drawWithCache {
+    val corner = CornerRadius(size.minDimension / 2f)
+    val highlight = Offset(size.width * 0.28f, 0f)
+
+    val fill = Brush.radialGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.26f),
+            Color.White.copy(alpha = 0.10f),
+            Color.White.copy(alpha = 0.04f),
+        ),
+        center = highlight,
+        radius = size.maxDimension * 1.1f,
+    )
+    val rim = Brush.linearGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.80f),
+            Color.White.copy(alpha = 0.10f),
+            Color.White.copy(alpha = 0.05f),
+            Color.White.copy(alpha = 0.30f),
+        ),
+        start = Offset(0f, 0f),
+        end = Offset(size.width, size.height),
+    )
+
+    onDrawBehind {
+        drawRoundRect(brush = fill, cornerRadius = corner)
+        drawRoundRect(brush = rim, cornerRadius = corner, style = Stroke(width = 1.dp.toPx()))
     }
 }
 
@@ -235,17 +290,18 @@ private fun HeroCarousel(pagerState: PagerState, scale: Scale) {
 
 @Composable
 private fun GlassPillButton(scale: Scale) {
+    val pillShape = RoundedCornerShape(50)
     Surface(
         onClick = {},
-        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(50)),
+        shape = ClickableSurfaceDefaults.shape(shape = pillShape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.14f),
-            focusedContainerColor = Color.White.copy(alpha = 0.26f),
+            containerColor = Color.Transparent,
+            focusedContainerColor = Color.White.copy(alpha = 0.20f),
         ),
     ) {
         Row(
             Modifier
-                .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(50))
+                .glassSurface()
                 .padding(horizontal = scale.dp(20), vertical = scale.dp(8)),
         ) {
             Icon(
