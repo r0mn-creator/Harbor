@@ -183,17 +183,22 @@ internal fun TriggerBadge(label: String, scale: Scale, onClick: () -> Unit) {
 /**
  * Real glass, not a flat translucent fill: an off-centre radial glow (the light sits up and to
  * the left, like Apple's own Liquid Glass reference renders) plus a diagonal rim that's bright
- * where the light grazes the edge and dark where it doesn't. Every call site here is a circle or
- * a fully-rounded pill, so a single corner radius of half the shorter side (correct for both)
- * covers it without needing to inspect the actual Shape.
+ * where the light grazes the edge and dark where it doesn't. Used for every glass surface in this
+ * UI - the circular/pill chrome (badges, the Play pill) and the box-art tiles alike, so the
+ * material reads as one consistent thing rather than badges being glass and cards being flat
+ * colour.
  *
- * Not a real Haze blur: several call sites (Library's LB/RB) live inside content already marked
- * `.haze()`, and a hazeChild can't be a descendant of the haze() source it would read from - see
- * the crash documented above. This fakes the same "light passing through glass" read with a
- * static gradient instead.
+ * @param cornerRadius Explicit corner radius for a rounded-rect surface (art tiles); omit for a
+ * circle or a fully-rounded pill, where half the shorter side is always the correct radius and
+ * there's no need to inspect the actual Shape.
+ *
+ * Not a real Haze blur: several call sites (Library's LB/RB, and its game grid) live inside
+ * content already marked `.haze()`, and a hazeChild can't be a descendant of the haze() source it
+ * would read from - see the crash documented above. This fakes the same "light passing through
+ * glass" read with a static gradient instead.
  */
-internal fun Modifier.glassSurface(): Modifier = this.drawWithCache {
-    val corner = CornerRadius(size.minDimension / 2f)
+internal fun Modifier.glassSurface(cornerRadius: Dp? = null): Modifier = this.drawWithCache {
+    val corner = if (cornerRadius != null) CornerRadius(cornerRadius.toPx()) else CornerRadius(size.minDimension / 2f)
     val highlight = Offset(size.width * 0.28f, 0f)
 
     val fill = Brush.radialGradient(
@@ -336,10 +341,13 @@ private fun ContinuePlayingShelf(scale: Scale) {
                         onClick = {},
                         shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp)),
                         colors = ClickableSurfaceDefaults.colors(
-                            containerColor = theme.surfaceVariant,
+                            containerColor = Color.Transparent,
                             focusedContainerColor = theme.accent.copy(alpha = 0.9f),
                         ),
-                        modifier = Modifier.size(scale.dp(96)),
+                        modifier = Modifier
+                            .size(scale.dp(96))
+                            .background(theme.surfaceVariant, RoundedCornerShape(16.dp))
+                            .glassSurface(cornerRadius = 16.dp),
                     ) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Icon(

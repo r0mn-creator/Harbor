@@ -78,10 +78,14 @@ private fun GameCell(title: String, scale: Scale) {
             onClick = {},
             shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
             colors = ClickableSurfaceDefaults.colors(
-                containerColor = theme.surfaceVariant,
+                containerColor = Color.Transparent,
                 focusedContainerColor = theme.accent.copy(alpha = 0.9f),
             ),
-            modifier = Modifier.fillMaxWidth().size(scale.dp(84)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .size(scale.dp(84))
+                .background(theme.surfaceVariant, RoundedCornerShape(14.dp))
+                .glassSurface(cornerRadius = 14.dp),
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
