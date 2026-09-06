@@ -50,5 +50,12 @@
                 <data android:pathPattern=".*\\.lhtheme" />
             </intent-filter>
         </activity>
+
+        <!-- Debug-only host for the Home-screen redesign mockup; not launcher-visible. -->
+        <activity
+            android:name=".ui.mock.MockHomeActivity"
+            android:exported="true"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.Harbor" />
     </application>
 </manifest>
