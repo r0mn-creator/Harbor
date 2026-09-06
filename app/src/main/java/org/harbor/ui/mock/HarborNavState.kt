@@ -7,11 +7,20 @@ import androidx.compose.runtime.setValue
 
 enum class HarborTab { HOME, LIBRARY, SETTINGS }
 
-/** Where the mockup currently is: which persistent tab, and which console within Library. */
+enum class SettingsCategory(val label: String) {
+    GENERAL("General"), NETWORK("Network"), THEMES("Themes")
+}
+
+/**
+ * Where the mockup currently is: which persistent tab, which console within Library, and which
+ * settings category is showing in the right-hand detail panel.
+ */
 class HarborNavState {
     var tab by mutableStateOf(HarborTab.HOME)
         private set
     var consoleIndex by mutableIntStateOf(0)
+        private set
+    var settingsCategory by mutableStateOf(SettingsCategory.GENERAL)
         private set
 
     fun selectTab(target: HarborTab) {
@@ -38,5 +47,9 @@ class HarborNavState {
 
     fun prevConsole() {
         consoleIndex = (consoleIndex - 1 + mockConsoles.size) % mockConsoles.size
+    }
+
+    fun selectSettingsCategory(category: SettingsCategory) {
+        settingsCategory = category
     }
 }

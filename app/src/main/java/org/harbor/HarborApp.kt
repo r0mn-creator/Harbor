@@ -97,7 +97,7 @@ class HarborApp : Application() {
 
     /** The active palette, from the colour theme named in harbor.conf. */
     fun activeColors(): ResolvedTheme {
-        val want = config.colorTheme ?: return ColorThemes.resolve(ColorThemes.DEFAULT)
+        val want = config.colorTheme ?: DEFAULT_THEME_NAME
         val t = colors.load().themes.firstOrNull { it.name == want }
             ?: ColorThemes.DEFAULT      // a deleted or renamed theme falls back
         return ColorThemes.resolve(t)
@@ -106,6 +106,9 @@ class HarborApp : Application() {
     companion object {
         lateinit var instance: HarborApp
             private set
+
+        /** Harbor's own out-of-the-box look, distinct from LightHouse's "Default" scheme. */
+        const val DEFAULT_THEME_NAME = "Monolith"
     }
 
     init {

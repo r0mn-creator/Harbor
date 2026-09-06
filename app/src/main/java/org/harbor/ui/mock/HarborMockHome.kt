@@ -129,7 +129,7 @@ fun HarborScaffold(navState: HarborNavState, onThemeChanged: () -> Unit) {
             when (navState.tab) {
                 HarborTab.HOME -> HomeContent(scale)
                 HarborTab.LIBRARY -> LibraryContent(scale, navState)
-                HarborTab.SETTINGS -> SettingsContent(scale, onThemeChanged)
+                HarborTab.SETTINGS -> SettingsContent(scale, navState, onThemeChanged)
             }
         }
 
