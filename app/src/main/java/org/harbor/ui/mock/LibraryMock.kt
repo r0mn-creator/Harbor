@@ -28,11 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import coil.compose.AsyncImage
 import org.harbor.theme.LocalTheme
 
 internal data class MockConsole(val name: String, val games: List<String>)
@@ -85,15 +87,25 @@ private fun GameCell(title: String, scale: Scale) {
                 .fillMaxWidth()
                 .size(scale.dp(84))
                 .background(theme.surfaceVariant, RoundedCornerShape(14.dp))
-                .glassSurface(cornerRadius = 14.dp),
+                .glassOverlay(cornerRadius = 14.dp),
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+              val art = boxArtAssets[title]
+              if (art != null) {
+                AsyncImage(
+                    model = art,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+              } else {
                 Icon(
                     Icons.Filled.VideogameAsset,
                     contentDescription = null,
                     tint = theme.textPrimary,
                     modifier = Modifier.size(scale.dp(22)),
                 )
+              }
             }
         }
         Spacer(Modifier.height(scale.dp(6)))

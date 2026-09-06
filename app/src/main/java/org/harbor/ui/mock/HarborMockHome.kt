@@ -37,6 +37,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -198,9 +200,34 @@ internal fun TriggerBadge(label: String, scale: Scale, onClick: () -> Unit) {
  * glass" read with a static gradient instead.
  */
 internal fun Modifier.glassSurface(cornerRadius: Dp? = null): Modifier = this.drawWithCache {
-    val corner = if (cornerRadius != null) CornerRadius(cornerRadius.toPx()) else CornerRadius(size.minDimension / 2f)
-    val highlight = Offset(size.width * 0.28f, 0f)
+    val corner = glassCorner(cornerRadius)
+    val (fill, rim) = glassBrushes()
+    onDrawBehind {
+        drawRoundRect(brush = fill, cornerRadius = corner)
+        drawRoundRect(brush = rim, cornerRadius = corner, style = Stroke(width = 1.dp.toPx()))
+    }
+}
 
+/**
+ * Same glass as [glassSurface], but painted ON TOP of the tile's own content instead of behind
+ * it - for box art specifically, so a real cover image reads as sitting under glass (a case still
+ * in its shrink wrap) rather than the glass being hidden underneath an opaque image.
+ */
+internal fun Modifier.glassOverlay(cornerRadius: Dp? = null): Modifier = this.drawWithCache {
+    val corner = glassCorner(cornerRadius)
+    val (fill, rim) = glassBrushes()
+    onDrawWithContent {
+        drawContent()
+        drawRoundRect(brush = fill, cornerRadius = corner)
+        drawRoundRect(brush = rim, cornerRadius = corner, style = Stroke(width = 1.dp.toPx()))
+    }
+}
+
+private fun androidx.compose.ui.draw.CacheDrawScope.glassCorner(cornerRadius: Dp?): CornerRadius =
+    if (cornerRadius != null) CornerRadius(cornerRadius.toPx()) else CornerRadius(size.minDimension / 2f)
+
+private fun androidx.compose.ui.draw.CacheDrawScope.glassBrushes(): Pair<Brush, Brush> {
+    val highlight = Offset(size.width * 0.28f, 0f)
     val fill = Brush.radialGradient(
         colors = listOf(
             Color.White.copy(alpha = 0.26f),
@@ -220,12 +247,15 @@ internal fun Modifier.glassSurface(cornerRadius: Dp? = null): Modifier = this.dr
         start = Offset(0f, 0f),
         end = Offset(size.width, size.height),
     )
-
-    onDrawBehind {
-        drawRoundRect(brush = fill, cornerRadius = corner)
-        drawRoundRect(brush = rim, cornerRadius = corner, style = Stroke(width = 1.dp.toPx()))
-    }
+    return fill to rim
 }
+
+/** Real cover art for a couple of titles so the glass-over-art look can actually be judged; every other title still falls back to the placeholder icon. */
+internal val boxArtAssets = mapOf(
+    "Halo 3" to "file:///android_asset/mock_boxart/halo3.jpg",
+    "Need for Speed: Carbon" to "file:///android_asset/mock_boxart/nfs_carbon.jpg",
+    "NFS: Carbon" to "file:///android_asset/mock_boxart/nfs_carbon.jpg",
+)
 
 private data class MockGame(val title: String, val subtitle: String, val gradient: List<Color>)
 
@@ -279,6 +309,22 @@ private fun HeroCarousel(pagerState: PagerState, scale: Scale) {
                     Text(game.subtitle, color = Color.White.copy(alpha = 0.7f), fontSize = scale.sp(14))
                     Spacer(Modifier.height(scale.dp(14)))
                     GlassPillButton(scale)
+                }
+
+                val art = boxArtAssets[game.title]
+                if (art != null) {
+                    AsyncImage(
+                        model = art,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = scale.dp(48))
+                            .width(scale.dp(110))
+                            .height(scale.dp(140))
+                            .clip(RoundedCornerShape(10.dp))
+                            .glassOverlay(cornerRadius = 10.dp),
+                    )
                 }
             }
         }
@@ -347,15 +393,25 @@ private fun ContinuePlayingShelf(scale: Scale) {
                         modifier = Modifier
                             .size(scale.dp(96))
                             .background(theme.surfaceVariant, RoundedCornerShape(16.dp))
-                            .glassSurface(cornerRadius = 16.dp),
+                            .glassOverlay(cornerRadius = 16.dp),
                     ) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Filled.VideogameAsset,
-                                contentDescription = null,
-                                tint = theme.textPrimary,
-                                modifier = Modifier.size(scale.dp(24)),
-                            )
+                            val art = boxArtAssets[title]
+                            if (art != null) {
+                                AsyncImage(
+                                    model = art,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Filled.VideogameAsset,
+                                    contentDescription = null,
+                                    tint = theme.textPrimary,
+                                    modifier = Modifier.size(scale.dp(24)),
+                                )
+                            }
                         }
                     }
                     Spacer(Modifier.height(scale.dp(6)))
