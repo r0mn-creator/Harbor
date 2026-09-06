@@ -27,7 +27,13 @@ interface SettingsSection {
     val icon: ImageVector
 
     @Composable
-    fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier)
+    fun Content(
+        scale: Scale,
+        navState: HarborNavState,
+        onThemeChanged: () -> Unit,
+        onImportTheme: () -> Unit,
+        modifier: Modifier,
+    )
 }
 
 /** Display order in the sidebar is registration order here - move a line to reorder it. */

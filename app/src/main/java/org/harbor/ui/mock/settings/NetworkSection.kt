@@ -28,7 +28,7 @@ object NetworkSection : SettingsSection {
 
     @OptIn(ExperimentalTvMaterial3Api::class)
     @Composable
-    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier) {
+    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, onImportTheme: () -> Unit, modifier: Modifier) {
         val theme = LocalTheme.current
         val context = LocalContext.current
         val status = remember { networkStatus(context) }

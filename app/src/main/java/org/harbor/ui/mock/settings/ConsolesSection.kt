@@ -45,7 +45,7 @@ object ConsolesSection : SettingsSection {
     override val icon: ImageVector = Icons.Filled.SportsEsports
 
     @Composable
-    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier) {
+    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, onImportTheme: () -> Unit, modifier: Modifier) {
         Row(modifier) {
             ConsolesList(scale, navState, Modifier.weight(1f).fillMaxHeight())
             if (navState.settingsConsoleDetailId != null) {

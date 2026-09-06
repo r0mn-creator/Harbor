@@ -26,7 +26,7 @@ object AddSystemSection : SettingsSection {
     override val icon: ImageVector = Icons.Filled.Add
 
     @Composable
-    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier) {
+    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, onImportTheme: () -> Unit, modifier: Modifier) {
         val app = HarborApp.instance
         val addedIds = remember { app.profiles.declared().map { it.id }.toSet() }
         val systems = remember { app.catalogue.load().systems }

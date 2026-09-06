@@ -22,7 +22,7 @@ object GeneralSection : SettingsSection {
 
     @OptIn(ExperimentalTvMaterial3Api::class)
     @Composable
-    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier) {
+    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, onImportTheme: () -> Unit, modifier: Modifier) {
         val theme = LocalTheme.current
         val app = HarborApp.instance
         val profileCount = remember { app.profiles.load().profiles.size }

@@ -1,10 +1,15 @@
 package org.harbor.ui.mock
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +28,43 @@ class MockHomeActivity : ComponentActivity() {
     private val navState = HarborNavState()
     private var colorEpoch by mutableIntStateOf(0)
 
+    /** Same picker MainActivity's classic menu already uses - any file, since ".theme" has no registered mime type. */
+    private val themePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val uri: Uri = res.data?.data ?: return@registerForActivityResult
+        val name = queryDisplayName(uri) ?: "Imported"
+        val text = runCatching {
+            contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        }.getOrNull()
+        if (text == null) {
+            Toast.makeText(this, "Could not read that file", Toast.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
+        HarborApp.instance.colors.importFrom(name, text)
+            .onSuccess {
+                Toast.makeText(this, "Added the \"$it\" theme", Toast.LENGTH_SHORT).show()
+                colorEpoch++
+            }
+            .onFailure {
+                Toast.makeText(this, "Not a theme file: ${it.message ?: "could not be read"}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun queryDisplayName(uri: Uri): String? = runCatching {
+        contentResolver.query(uri, null, null, null, null)?.use { c ->
+            val i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (i >= 0 && c.moveToFirst()) c.getString(i) else null
+        }
+    }.getOrNull()
+
+    private fun importColorTheme() {
+        val i = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }
+        runCatching { themePicker.launch(i) }
+            .onFailure { Toast.makeText(this, "No file picker available on this device", Toast.LENGTH_SHORT).show() }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         immersive()
@@ -31,7 +73,7 @@ class MockHomeActivity : ComponentActivity() {
             // theme in Settings applies immediately, not after a restart.
             val theme = remember(colorEpoch) { HarborApp.instance.activeColors() }
             CompositionLocalProvider(LocalTheme provides theme) {
-                HarborScaffold(navState, onThemeChanged = { colorEpoch++ })
+                HarborScaffold(navState, onThemeChanged = { colorEpoch++ }, onImportTheme = ::importColorTheme)
             }
         }
     }

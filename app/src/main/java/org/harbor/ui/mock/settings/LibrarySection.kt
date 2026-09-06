@@ -37,7 +37,7 @@ object LibrarySection : SettingsSection {
 
     @OptIn(ExperimentalTvMaterial3Api::class)
     @Composable
-    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier) {
+    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, onImportTheme: () -> Unit, modifier: Modifier) {
         val theme = LocalTheme.current
         val app = HarborApp.instance
         var key by rememberSaveable { mutableStateOf(app.config.steamGridDbKey ?: "") }

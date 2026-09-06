@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -40,7 +41,13 @@ object ThemesSection : SettingsSection {
 
     @OptIn(ExperimentalTvMaterial3Api::class)
     @Composable
-    override fun Content(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit, modifier: Modifier) {
+    override fun Content(
+        scale: Scale,
+        navState: HarborNavState,
+        onThemeChanged: () -> Unit,
+        onImportTheme: () -> Unit,
+        modifier: Modifier,
+    ) {
         val app = HarborApp.instance
         val loaded = remember { app.colors.load() }
         // Not remembered: this must re-read after every onThemeChanged() so the checkmark moves
@@ -51,6 +58,15 @@ object ThemesSection : SettingsSection {
 
         Column(modifier) {
             PanelHeading("Color Theme", "Same theme files as LightHouse - drop a .theme into themes/colors to add more.", scale)
+            Row(Modifier.padding(start = scale.dp(32), bottom = scale.dp(16))) {
+                ActionRow(
+                    icon = Icons.Filled.FileOpen,
+                    label = "Add a theme from a file",
+                    detail = "Pick a .theme file you wrote - Downloads, a USB stick, anywhere",
+                    scale = scale,
+                    onClick = onImportTheme,
+                )
+            }
             LazyColumn(contentPadding = PaddingValues(start = scale.dp(32), end = scale.dp(32), top = scale.dp(4), bottom = scale.dp(96))) {
                 items(loaded.themes) { colorTheme ->
                     ThemeRow(

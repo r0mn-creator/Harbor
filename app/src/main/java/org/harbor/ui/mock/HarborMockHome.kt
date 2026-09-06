@@ -110,7 +110,7 @@ internal fun Modifier.frostedSelection(shape: Shape): Modifier {
  * LT/RT badges never disappear.
  */
 @Composable
-fun HarborScaffold(navState: HarborNavState, onThemeChanged: () -> Unit) {
+fun HarborScaffold(navState: HarborNavState, onThemeChanged: () -> Unit, onImportTheme: () -> Unit) {
     val hazeState = remember { HazeState() }
     val theme = LocalTheme.current
 
@@ -129,7 +129,7 @@ fun HarborScaffold(navState: HarborNavState, onThemeChanged: () -> Unit) {
             when (navState.tab) {
                 HarborTab.HOME -> HomeContent(scale)
                 HarborTab.LIBRARY -> LibraryContent(scale, navState)
-                HarborTab.SETTINGS -> SettingsContent(scale, navState, onThemeChanged)
+                HarborTab.SETTINGS -> SettingsContent(scale, navState, onThemeChanged, onImportTheme)
             }
         }
 

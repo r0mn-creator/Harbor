@@ -37,11 +37,16 @@ import org.harbor.ui.mock.settings.settingsSections
  * section means editing [settingsSections] - this file never changes.
  */
 @Composable
-internal fun SettingsContent(scale: Scale, navState: HarborNavState, onThemeChanged: () -> Unit) {
+internal fun SettingsContent(
+    scale: Scale,
+    navState: HarborNavState,
+    onThemeChanged: () -> Unit,
+    onImportTheme: () -> Unit,
+) {
     val selected = settingsSections.firstOrNull { it.id == navState.settingsSectionId } ?: settingsSections.first()
     Row(Modifier.fillMaxSize()) {
         SettingsSidebar(scale, navState)
-        selected.Content(scale, navState, onThemeChanged, Modifier.weight(1f).fillMaxHeight())
+        selected.Content(scale, navState, onThemeChanged, onImportTheme, Modifier.weight(1f).fillMaxHeight())
     }
 }
 
