@@ -1,7 +1,13 @@
-LH Game Launcher
+Harbor
 Copyright 2026 r0mn-creator
 
-https://github.com/r0mn-creator/LH-Game-Launcher
+Harbor is a fork of LH Game Launcher ("LightHouse"), reusing its data model,
+platform/provider system, and launch-contract engine under a new UI.
+
+Original project:
+  LH Game Launcher
+  Copyright 2026 r0mn-creator
+  https://github.com/r0mn-creator/LH-Game-Launcher
 
 Licensed under the Apache License, Version 2.0. See LICENSE.
 

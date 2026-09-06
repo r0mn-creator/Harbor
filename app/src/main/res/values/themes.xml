@@ -1,7 +1,7 @@
 <resources>
     <!-- Compose paints everything; this only needs to avoid a white flash on
          launch and let the app draw edge to edge. -->
-    <style name="Theme.LightHouse" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Harbor" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">#0E1116</item>
         <item name="android:statusBarColor">#00000000</item>
         <item name="android:navigationBarColor">#00000000</item>

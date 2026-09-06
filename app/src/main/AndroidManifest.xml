@@ -10,12 +10,12 @@
         xmlns:tools="http://schemas.android.com/tools" />
 
     <application
-        android:name=".LightHouseApp"
+        android:name=".HarborApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LightHouse">
+        android:theme="@style/Theme.Harbor">
 
         <activity
             android:name=".ui.MainActivity"
@@ -23,14 +23,14 @@
             android:launchMode="singleTask"
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden|navigation"
-            android:theme="@style/Theme.LightHouse">
+            android:theme="@style/Theme.Harbor">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- LightHouse is a home-screen replacement. Being the default
+            <!-- Harbor is a home-screen replacement. Being the default
                  launcher is also what makes the shortcut passthrough possible:
                  LauncherApps.getShortcuts() is only available to the active
                  home app. -->
