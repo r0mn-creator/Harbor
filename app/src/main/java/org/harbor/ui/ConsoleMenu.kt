@@ -53,6 +53,12 @@ sealed interface MenuItem {
         override val detail: String? = null,
         override val enabled: Boolean = true,
         val danger: Boolean = false,
+        /**
+         * Optional secondary action, reached by long-pressing the row (and by Y
+         * on a pad, since a controller cannot long-press). Used for things that
+         * should not sit in the list as their own row — removing a theme, say.
+         */
+        val onLongPress: (() -> Unit)? = null,
         val run: () -> Unit,
     ) : MenuItem
 

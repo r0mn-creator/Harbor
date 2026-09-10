@@ -204,14 +204,36 @@ class ColorThemeStore(private val context: Context) {
 
     val dir: File get() = File(context.getExternalFilesDir(null), "themes/colors")
 
+    /**
+     * File names the user deleted, one per line.
+     *
+     * Needed because [installBundled] re-extracts any bundled theme whose file is
+     * missing — without this, removing a bundled theme would silently undo itself
+     * on the next launch. Re-importing a theme of the same name clears its entry.
+     */
+    private val tombstone: File get() = File(dir, ".removed")
+
+    private fun removedNames(): Set<String> =
+        runCatching { tombstone.readLines().map { it.trim() }.filter { it.isNotEmpty() }.toSet() }
+            .getOrDefault(emptySet())
+
+    private fun writeRemovedNames(names: Set<String>) {
+        runCatching {
+            if (names.isEmpty()) tombstone.delete()
+            else tombstone.writeText(names.joinToString("\n"))
+        }.onFailure { Log.e(TAG, "could not update $tombstone", it) }
+    }
+
     fun installBundled() {
         if (!dir.exists() && !dir.mkdirs()) {
             Log.e(TAG, "could not create $dir"); return
         }
+        val removed = removedNames()
         val names = runCatching { context.assets.list("colors") }.getOrNull().orEmpty()
         for (n in names) {
             val out = File(dir, n)
             if (out.exists()) continue          // never clobber an edited theme
+            if (n in removed) continue          // the user deleted this one; leave it gone
             runCatching {
                 context.assets.open("colors/$n").use { i ->
                     out.outputStream().use { o -> i.copyTo(o) }
@@ -245,7 +267,32 @@ class ColorThemeStore(private val context: Context) {
         if (!dir.exists() && !dir.mkdirs()) {
             return Result.failure(IllegalStateException("could not create $dir"))
         }
-        return runCatching { File(dir, clean + EXT).writeText(text); clean }
+        return runCatching {
+            val out = File(dir, clean + EXT)
+            out.writeText(text)
+            // Adding a theme back un-deletes it, so a later launch does not treat
+            // it as still-removed and a bundled one can be restored by re-adding.
+            writeRemovedNames(removedNames() - out.name)
+            clean
+        }
+    }
+
+    /**
+     * Delete a theme's file, and remember that it was deleted.
+     *
+     * The built-in default has no file and cannot be removed. Bundled themes can
+     * be, but deleting the file is not enough on its own: [installBundled] runs
+     * on every launch and would put it straight back. Recording the name in the
+     * tombstone is what makes "remove" actually stick.
+     */
+    fun delete(theme: ColorTheme): Result<Unit> {
+        val f = theme.file
+            ?: return Result.failure(IllegalArgumentException("the default theme cannot be removed"))
+        if (f.exists() && !f.delete()) {
+            return Result.failure(IllegalStateException("could not delete ${f.name}"))
+        }
+        writeRemovedNames(removedNames() + f.name)
+        return Result.success(Unit)
     }
 
     data class Loaded(

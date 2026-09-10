@@ -90,6 +90,8 @@ class MainActivity : ComponentActivity() {
     private var editingSpec by mutableStateOf<org.harbor.data.LaunchSpec?>(null)
     /** Set while a test launch is out; answered when the user comes back. */
     private var verifyFor by mutableStateOf<Pair<String, String>?>(null)
+    /** Theme name awaiting "are you sure?" before its file is deleted. */
+    private var removeThemeFor by mutableStateOf<String?>(null)
     private var editorCursor by mutableIntStateOf(0)
     private var appPickerCursor by mutableIntStateOf(0)
     /** Open text prompt: title, hint, current value, and what to do with it. */
@@ -315,6 +317,16 @@ class MainActivity : ComponentActivity() {
                         cursorRow = kbRow, cursorCol = kbCol,
                         onKeyTap = { r, c -> kbRow = r; kbCol = c; pressKey() },
                         onCancel = { prompt = null },
+                    )
+                }
+                removeThemeFor?.let { name ->
+                    ConfirmDialog(
+                        title = "Remove \"" + name + "\"?",
+                        message = "Its .theme file is deleted from this device. " +
+                            "You can add it again later from a file.",
+                        confirmLabel = "Remove",
+                        onConfirm = { removeThemeFor = null; confirmRemoveColorTheme(name) },
+                        onCancel = { removeThemeFor = null },
                     )
                 }
                 contextMenuFor?.let { (_, g) ->
@@ -585,6 +597,8 @@ class MainActivity : ComponentActivity() {
             }
             Nav.BACK -> when {
                 prompt != null -> prompt = null
+                // Backing out of "are you sure?" is a No, which is the safe answer.
+                removeThemeFor != null -> removeThemeFor = null
                 verifyFor != null -> Unit          // must be answered
                 contextMenuFor != null -> if (contextMenuConfirming) {
                     contextMenuConfirming = false; contextMenuCursor = 0
@@ -612,9 +626,15 @@ class MainActivity : ComponentActivity() {
             // and a pad has no touchscreen to hold.
             Nav.SEARCH -> {
                 val g = page?.games?.getOrNull(cursor.index)
-                if (page != null && g != null && prompt == null && contextMenuFor == null &&
+                if (showSettings) {
+                    // Same idea one level down: in Settings, X is the pad's stand-in
+                    // for holding a row (e.g. removing a colour theme).
+                    val node = MenuTree(settingsState(), menuActions).nodeFor(currentPath())
+                    val item = node.items.getOrNull(cursorFor(node)) as? MenuItem.Action
+                    item?.takeIf { it.enabled }?.onLongPress?.invoke()
+                } else if (page != null && g != null && prompt == null && contextMenuFor == null &&
                     artPickerFor == null && !editingPickPackage && editingId == null &&
-                    onboardStep == null && !showAppPicker && !showDrawer && !showSettings
+                    onboardStep == null && !showAppPicker && !showDrawer
                 ) {
                     contextMenuFor = page to g
                 } else {
@@ -1262,6 +1282,7 @@ class MainActivity : ComponentActivity() {
         override fun addSystem(system: org.harbor.data.CatalogueSystem) =
             this@MainActivity.addSystem(system)
         override fun pickColorTheme(name: String?) = this@MainActivity.pickColorTheme(name)
+        override fun removeColorTheme(name: String) { removeThemeFor = name }
         override fun importColorTheme() = this@MainActivity.importColorTheme()
         override fun openColorFolder() {
             toast("Colour themes live in " + app.colors.dir.absolutePath)
@@ -1751,6 +1772,23 @@ class MainActivity : ComponentActivity() {
         if (err != null) { toast(err); return }
         colorEpoch++
         toast(if (name == null) "Using the default colours" else "Colours: " + name)
+    }
+
+    /**
+     * Delete a theme's file, and fall back to the default if it was the one in use
+     * — otherwise the config would keep naming a theme that no longer exists.
+     */
+    private fun confirmRemoveColorTheme(name: String) {
+        val theme = app.colors.load().themes.firstOrNull { it.name == name }
+        if (theme == null) { toast("No theme called \"" + name + "\""); return }
+        app.colors.delete(theme)
+            .onSuccess {
+                if (app.config.colorTheme == name) pickColorTheme(null)
+                colorEpoch++
+                reload()
+                toast("Removed \"" + name + "\"")
+            }
+            .onFailure { toast(it.message ?: "Could not remove that theme") }
     }
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()

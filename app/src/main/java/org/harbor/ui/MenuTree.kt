@@ -34,6 +34,7 @@ class MenuTree(
         fun remove(platformId: String)
         fun addSystem(system: CatalogueSystem)
         fun pickColorTheme(name: String?)
+        fun removeColorTheme(name: String)
         fun importColorTheme()
         fun openColorFolder()
         fun openOtherApp(releasePackage: String)
@@ -288,10 +289,21 @@ class MenuTree(
         subtitle = "One file per theme in themes/colors — the file name is the theme name",
         items = buildList {
             state.colorThemes.forEach { name ->
-                add(MenuItem.Action(name,
-                    if (name == state.activeColorTheme) "Active" else null) {
-                    actions.pickColorTheme(name)
-                })
+                val isDefault = name == org.harbor.theme.ColorThemes.DEFAULT_NAME
+                add(MenuItem.Action(
+                    label = name,
+                    // isDefault is checked FIRST: the built-in has no file to delete,
+                    // so offering "hold to remove" on it would be a lie even when it
+                    // is also the active theme.
+                    detail = when {
+                        isDefault -> if (name == state.activeColorTheme) "Active" else null
+                        name == state.activeColorTheme -> "Active  ·  hold to remove"
+                        else -> "Hold to remove"
+                    },
+                    // The built-in default has no file behind it, so there is
+                    // nothing to delete and no long-press offered.
+                    onLongPress = if (isDefault) null else ({ actions.removeColorTheme(name) }),
+                ) { actions.pickColorTheme(name) })
             }
             add(MenuItem.Action("Add a theme from a file",
                 "Pick a .theme file you wrote - Downloads, a USB stick, anywhere") {

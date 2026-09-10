@@ -13,6 +13,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -197,16 +198,26 @@ private fun ContentPane(
         }
         LazyColumn(state = state, contentPadding = PaddingValues(bottom = 16.dp)) {
             itemsIndexed(node.items) { i, item ->
-                ContentRow(item, focused && i == cursor) {
-                    if (item.enabled) { onSelect(i); onActivate(i) }
-                }
+                ContentRow(
+                    item = item,
+                    focused = focused && i == cursor,
+                    onClick = { if (item.enabled) { onSelect(i); onActivate(i) } },
+                    onLongPress = ((item as? MenuItem.Action)?.onLongPress)?.let { act ->
+                        { if (item.enabled) { onSelect(i); act() } }
+                    },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ContentRow(item: MenuItem, focused: Boolean, onClick: () -> Unit) {
+private fun ContentRow(
+    item: MenuItem,
+    focused: Boolean,
+    onClick: () -> Unit,
+    onLongPress: (() -> Unit)? = null,
+) {
     val theme = LocalTheme.current
 
     if (item is MenuItem.Note) {
@@ -230,7 +241,11 @@ private fun ContentRow(item: MenuItem, focused: Boolean, onClick: () -> Unit) {
                 if (focused) Modifier.border(1.dp, theme.primary.copy(alpha = 0.8f),
                     RoundedCornerShape(12.dp)) else Modifier
             )
-            .clickable(onClick = onClick)
+            .then(
+                if (onLongPress != null)
+                    Modifier.combinedClickable(onClick = onClick, onLongClick = onLongPress)
+                else Modifier.clickable(onClick = onClick)
+            )
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
