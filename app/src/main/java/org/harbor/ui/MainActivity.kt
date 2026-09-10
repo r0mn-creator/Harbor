@@ -440,15 +440,45 @@ class MainActivity : ComponentActivity() {
      * the whole point of driving selection by index.
      */
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val nav = GamepadNav.fromKey(event.keyCode)
+
+        // A is the only key with a tap/hold split, so it cannot fire on the way
+        // down like the others: we do not yet know which gesture this is. Acting
+        // on ACTION_UP is what makes "tap" distinguishable from "hold".
+        //
+        // Deliberately NOT applied to the d-pad, where holding should auto-repeat
+        // to scroll rather than mean something different.
+        if (nav == Nav.LAUNCH) {
+            when (event.action) {
+                KeyEvent.ACTION_DOWN -> {
+                    if (event.repeatCount == 0) {
+                        launchHeldFired = false
+                    } else if (!launchHeldFired) {
+                        // First auto-repeat ≈ the system's long-press threshold.
+                        launchHeldFired = true
+                        handle(Nav.LAUNCH_HELD)
+                    }
+                    return true
+                }
+                KeyEvent.ACTION_UP -> {
+                    if (!launchHeldFired) handle(Nav.LAUNCH)
+                    launchHeldFired = false
+                    return true
+                }
+            }
+        }
+
         if (event.action == KeyEvent.ACTION_DOWN) {
-            val nav = GamepadNav.fromKey(event.keyCode)
             if (nav != null) { handle(nav); return true }
         } else if (event.action == KeyEvent.ACTION_UP) {
             // Swallow the matching UP so nothing downstream reacts to it.
-            if (GamepadNav.fromKey(event.keyCode) != null) return true
+            if (nav != null) return true
         }
         return super.dispatchKeyEvent(event)
     }
+
+    /** True once a hold has already acted, so releasing A does not also count as a tap. */
+    private var launchHeldFired = false
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         val nav = GamepadNav.fromMotion(event)
@@ -460,6 +490,32 @@ class MainActivity : ComponentActivity() {
         val nav = GamepadNav.fromMotion(event)
         if (nav != null) { handle(nav); return true }
         return super.onGenericMotionEvent(event)
+    }
+
+    /**
+     * The long-press action for whatever is focused right now, wherever we are.
+     *
+     * @return true if there was something to do, so a caller can fall back.
+     */
+    private fun longPressCurrent(): Boolean {
+        // An overlay is already up; a long press underneath it means nothing.
+        if (prompt != null || removeThemeFor != null || verifyFor != null ||
+            contextMenuFor != null || artPickerFor != null || editingPickPackage ||
+            editingId != null || onboardStep != null || showAppPicker || showDrawer
+        ) return false
+
+        if (showSettings) {
+            val node = MenuTree(settingsState(), menuActions).nodeFor(currentPath())
+            val item = node.items.getOrNull(cursorFor(node)) as? MenuItem.Action
+            val act = item?.takeIf { it.enabled }?.onLongPress ?: return false
+            act()
+            return true
+        }
+
+        val pg = pages.getOrNull(systemIndex) ?: return false
+        val g = pg.games.getOrNull(cursor.index) ?: return false
+        contextMenuFor = pg to g
+        return true
     }
 
     /** Rows a game's own menu currently shows - depends on whether it can have art at all. */
@@ -621,25 +677,13 @@ class MainActivity : ComponentActivity() {
                 menuPath = emptyList(); menuForward = true
                 pane = Pane.RAIL; categoryIndex = 0; showSettings = true
             }
-            // X doubles as "open this game's menu" - the pad equivalent of
-            // holding a tile down - since Search has nowhere else to live yet
-            // and a pad has no touchscreen to hold.
+            // Holding A is the pad's long press, and means the same thing it does
+            // under a finger: show what this row can do beyond being picked.
+            Nav.LAUNCH_HELD -> longPressCurrent()
             Nav.SEARCH -> {
-                val g = page?.games?.getOrNull(cursor.index)
-                if (showSettings) {
-                    // Same idea one level down: in Settings, X is the pad's stand-in
-                    // for holding a row (e.g. removing a colour theme).
-                    val node = MenuTree(settingsState(), menuActions).nodeFor(currentPath())
-                    val item = node.items.getOrNull(cursorFor(node)) as? MenuItem.Action
-                    item?.takeIf { it.enabled }?.onLongPress?.invoke()
-                } else if (page != null && g != null && prompt == null && contextMenuFor == null &&
-                    artPickerFor == null && !editingPickPackage && editingId == null &&
-                    onboardStep == null && !showAppPicker && !showDrawer
-                ) {
-                    contextMenuFor = page to g
-                } else {
-                    toast("Search is not built yet")
-                }
+                // X stays as a shortcut to the same thing, for anyone who prefers
+                // a discrete button to holding one.
+                if (!longPressCurrent()) toast("Search is not built yet")
             }
             // LT/RT page the persistent tab bar in the redesigned UI (see
             // org.harbor.ui.mock) - this screen has no tab bar yet.

@@ -15,7 +15,13 @@ import android.view.MotionEvent
  * control over wrapping, row jumps and keeping the selection centred, which is
  * what makes this feel like a console UI instead of a scrollable list.
  */
-enum class Nav { LEFT, RIGHT, UP, DOWN, PREV_SYSTEM, NEXT_SYSTEM, PREV_TAB, NEXT_TAB, LAUNCH, BACK, MENU, SEARCH }
+enum class Nav {
+    LEFT, RIGHT, UP, DOWN, PREV_SYSTEM, NEXT_SYSTEM, PREV_TAB, NEXT_TAB,
+    LAUNCH,
+    /** A held down rather than tapped — the pad's long press. */
+    LAUNCH_HELD,
+    BACK, MENU, SEARCH,
+}
 
 object GamepadNav {
 

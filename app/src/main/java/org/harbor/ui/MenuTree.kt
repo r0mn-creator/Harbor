@@ -297,8 +297,8 @@ class MenuTree(
                     // is also the active theme.
                     detail = when {
                         isDefault -> if (name == state.activeColorTheme) "Active" else null
-                        name == state.activeColorTheme -> "Active  ·  hold to remove"
-                        else -> "Hold to remove"
+                        name == state.activeColorTheme -> "Active  ·  hold A to remove"
+                        else -> "Hold A to remove"
                     },
                     // The built-in default has no file behind it, so there is
                     // nothing to delete and no long-press offered.
