@@ -40,6 +40,9 @@ fun ConfirmDialog(
     title: String,
     message: String,
     confirmLabel: String,
+    /** 0 = confirm, 1 = cancel. Driven by the d-pad; the pad is the primary input. */
+    cursor: Int,
+    onSelect: (Int) -> Unit,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -53,22 +56,30 @@ fun ConfirmDialog(
     ) {
         Column(
             Modifier
-                .fillMaxWidth(0.6f)
-                .clip(RoundedCornerShape(14.dp))
+                .fillMaxWidth(0.62f)
+                .clip(RoundedCornerShape(16.dp))
                 .background(theme.surface)
                 // Swallow taps on the card so they do not reach the scrim and cancel.
                 .clickable(enabled = false) {}
-                .padding(24.dp)
+                .padding(32.dp)
         ) {
-            Text(title, color = theme.textPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            Text(message, color = theme.textSecondary, fontSize = 13.sp)
-            Spacer(Modifier.height(20.dp))
+            // Sized for a sofa, not a desk: this is read from across a room.
+            Text(title, color = theme.textPrimary, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(10.dp))
+            Text(message, color = theme.textSecondary, fontSize = 16.sp)
+            Spacer(Modifier.height(26.dp))
             Row {
-                DangerPill(confirmLabel, onConfirm)
-                Spacer(Modifier.width(12.dp))
-                PlainPill("Cancel", onCancel)
+                ChoicePill(confirmLabel, focused = cursor == 0, danger = true,
+                    onClick = { onSelect(0); onConfirm() })
+                Spacer(Modifier.width(14.dp))
+                ChoicePill("Cancel", focused = cursor == 1, danger = false,
+                    onClick = { onSelect(1); onCancel() })
             }
+            Spacer(Modifier.height(20.dp))
+            Text(
+                "D-pad to choose  ·  A to confirm  ·  B to cancel",
+                color = theme.textSecondary, fontSize = 13.sp,
+            )
         }
     }
 }
@@ -85,30 +96,35 @@ fun ConfirmDialog(
  */
 private val DangerRed = Color(0xFFFF5C5C)
 
+/**
+ * Focus has to be obvious from the sofa, so the focused option is a filled
+ * block rather than a slightly brighter outline — at three metres a 1dp border
+ * change is invisible. Unfocused options stay quiet so there is only ever one
+ * thing that looks live.
+ */
 @Composable
-private fun DangerPill(label: String, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(7.dp))
-            .background(DangerRed.copy(alpha = 0.15f))
-            .border(1.dp, DangerRed.copy(alpha = 0.8f), RoundedCornerShape(7.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 7.dp)
-    ) {
-        Text(label, color = DangerRed, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-private fun PlainPill(label: String, onClick: () -> Unit) {
+private fun ChoicePill(label: String, focused: Boolean, danger: Boolean, onClick: () -> Unit) {
     val theme = LocalTheme.current
+    val tint = if (danger) DangerRed else theme.primary
     Box(
         Modifier
-            .clip(RoundedCornerShape(7.dp))
-            .border(1.dp, theme.primary.copy(alpha = 0.6f), RoundedCornerShape(7.dp))
+            .clip(RoundedCornerShape(9.dp))
+            .background(if (focused) tint else tint.copy(alpha = 0.10f))
+            .border(
+                width = if (focused) 2.dp else 1.dp,
+                color = if (focused) tint else tint.copy(alpha = 0.45f),
+                shape = RoundedCornerShape(9.dp),
+            )
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 7.dp)
+            .padding(horizontal = 22.dp, vertical = 12.dp)
     ) {
-        Text(label, color = theme.primary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        Text(
+            label,
+            // On the filled state the label sits on the tint, so it takes the
+            // dialog's own background colour to stay legible on any theme.
+            color = if (focused) theme.surface else tint,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }

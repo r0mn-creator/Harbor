@@ -92,6 +92,12 @@ class MainActivity : ComponentActivity() {
     private var verifyFor by mutableStateOf<Pair<String, String>?>(null)
     /** Theme name awaiting "are you sure?" before its file is deleted. */
     private var removeThemeFor by mutableStateOf<String?>(null)
+    /**
+     * 0 = Remove, 1 = Cancel. Starts on Cancel: on a TV the pad is the only input,
+     * A is the button under your thumb, and this deletes a file. The safe answer
+     * should be the one you get for pressing A without reading.
+     */
+    private var removeThemeCursor by mutableStateOf(1)
     private var editorCursor by mutableIntStateOf(0)
     private var appPickerCursor by mutableIntStateOf(0)
     /** Open text prompt: title, hint, current value, and what to do with it. */
@@ -325,6 +331,8 @@ class MainActivity : ComponentActivity() {
                         message = "Its .theme file is deleted from this device. " +
                             "You can add it again later from a file.",
                         confirmLabel = "Remove",
+                        cursor = removeThemeCursor,
+                        onSelect = { removeThemeCursor = it },
                         onConfirm = { removeThemeFor = null; confirmRemoveColorTheme(name) },
                         onCancel = { removeThemeFor = null },
                     )
@@ -544,6 +552,14 @@ class MainActivity : ComponentActivity() {
                 cursor = cursor.copy(index = 0)
             }
             Nav.LEFT, Nav.RIGHT, Nav.UP, Nav.DOWN -> when {
+                // Must come first, and must swallow the event: an overlay that lets
+                // the d-pad move the screen behind it is worse than useless on a TV,
+                // because you cannot see what you are changing.
+                removeThemeFor != null -> removeThemeCursor = when (nav) {
+                    Nav.LEFT, Nav.UP -> 0
+                    Nav.RIGHT, Nav.DOWN -> 1
+                    else -> removeThemeCursor
+                }
                 prompt != null -> {
                     val rows = keyboardRows(promptSymbols)
                     kbRow = kbRow.coerceIn(0, rows.size - 1)
@@ -600,7 +616,11 @@ class MainActivity : ComponentActivity() {
                 showSettings -> moveMenu(nav)
                 else -> cursor = cursor.move(nav, page?.games?.size ?: 0)
             }
-            Nav.LAUNCH -> if (prompt != null) {
+            Nav.LAUNCH -> if (removeThemeFor != null) {
+                val name = removeThemeFor!!
+                removeThemeFor = null
+                if (removeThemeCursor == 0) confirmRemoveColorTheme(name)
+            } else if (prompt != null) {
                 pressKey()
             } else if (contextMenuFor != null) {
                 val (pg, g) = contextMenuFor!!
@@ -1326,7 +1346,10 @@ class MainActivity : ComponentActivity() {
         override fun addSystem(system: org.harbor.data.CatalogueSystem) =
             this@MainActivity.addSystem(system)
         override fun pickColorTheme(name: String?) = this@MainActivity.pickColorTheme(name)
-        override fun removeColorTheme(name: String) { removeThemeFor = name }
+        override fun removeColorTheme(name: String) {
+            removeThemeCursor = 1        // always reopen on Cancel, never on Remove
+            removeThemeFor = name
+        }
         override fun importColorTheme() = this@MainActivity.importColorTheme()
         override fun openColorFolder() {
             toast("Colour themes live in " + app.colors.dir.absolutePath)
