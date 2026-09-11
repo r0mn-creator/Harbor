@@ -1367,6 +1367,15 @@ class MainActivity : ComponentActivity() {
         override fun addSystem(system: org.harbor.data.CatalogueSystem) =
             this@MainActivity.addSystem(system)
         override fun pickColorTheme(name: String?) = this@MainActivity.pickColorTheme(name)
+        override fun openAccessibilitySettings() {
+            runCatching {
+                startActivity(
+                    android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+                toast("Turn on \"Harbor guide button\"")
+            }.onFailure { toast("Could not open accessibility settings") }
+        }
         override fun removeColorTheme(name: String) {
             removeThemeCursor = 1        // always reopen on Cancel, never on Remove
             removeThemeFor = name

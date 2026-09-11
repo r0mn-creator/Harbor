@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Harbor</string>
+    <string name="guide_service_label">Harbor guide button</string>
+    <string name="guide_service_description">Lets the guide button on your controller bring up Harbor\'s exit prompt while a game is running. Hold it for three seconds; a short press still goes to the game.</string>
 </resources>

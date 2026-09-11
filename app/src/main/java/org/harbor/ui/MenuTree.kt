@@ -35,6 +35,7 @@ class MenuTree(
         fun addSystem(system: CatalogueSystem)
         fun pickColorTheme(name: String?)
         fun removeColorTheme(name: String)
+        fun openAccessibilitySettings()
         fun importColorTheme()
         fun openColorFolder()
         fun openOtherApp(releasePackage: String)
@@ -59,6 +60,11 @@ class MenuTree(
     private fun about() = MenuNode(
         id = "about", title = "About",
         items = listOf(
+            MenuItem.Action(
+                "Guide button",
+                "Hold the guide button for 3s in a game to get an exit prompt. " +
+                    "Needs turning on in Android's accessibility settings.",
+            ) { actions.openAccessibilitySettings() },
             MenuItem.Note("Harbor 0.1.0"),
             MenuItem.Note("${state.gamesTotal} games", "${state.gamesPlayable} playable"),
             MenuItem.Note("${state.platforms.size} consoles",

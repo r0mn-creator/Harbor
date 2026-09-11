@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The guide button is the one console affordance that has to work from inside
+  someone else's app, so it cannot be handled by Harbor's own activity: while a
+  game is foreground, the game receives its input, not us.
+
+  An accessibility service with flagRequestFilterKeyEvents is the supported way
+  to see a key press globally and consume it before the foreground app does.
+  It needs an explicit user grant, which is correct for something this powerful.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRequestFilterKeyEvents|flagDefault"
+    android:canRequestFilterKeyEvents="true"
+    android:description="@string/guide_service_description"
+    android:notificationTimeout="100" />

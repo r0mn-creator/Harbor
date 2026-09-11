@@ -57,5 +57,20 @@
             android:exported="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.Harbor" />
+        <!-- The guide button has to be seen while someone else's game is
+             foreground, which only an accessibility service can do. Opt-in:
+             the user grants it explicitly in system settings. -->
+        <service
+            android:name=".ui.GuideService"
+            android:exported="true"
+            android:label="@string/guide_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/guide_service" />
+        </service>
     </application>
 </manifest>
