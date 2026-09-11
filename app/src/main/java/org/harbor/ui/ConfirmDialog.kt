@@ -40,6 +40,14 @@ fun ConfirmDialog(
     title: String,
     message: String,
     confirmLabel: String,
+    cancelLabel: String = "Cancel",
+    /**
+     * Paints the confirm option as destructive. False for a plain either/or
+     * question, where neither answer is a loss and red would just be alarming.
+     */
+    danger: Boolean = true,
+    /** true when B must not dismiss — the question has to be answered. */
+    mustAnswer: Boolean = false,
     /** 0 = confirm, 1 = cancel. Driven by the d-pad; the pad is the primary input. */
     cursor: Int,
     onSelect: (Int) -> Unit,
@@ -51,7 +59,9 @@ fun ConfirmDialog(
         Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.7f))
-            .clickable(onClick = onCancel),
+            // Tapping the scrim is a touch-only shortcut for "no". Disabled when the
+            // question must be answered, so a stray tap cannot skip it.
+            .then(if (mustAnswer) Modifier else Modifier.clickable(onClick = onCancel)),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -69,15 +79,16 @@ fun ConfirmDialog(
             Text(message, color = theme.textSecondary, fontSize = 16.sp)
             Spacer(Modifier.height(26.dp))
             Row {
-                ChoicePill(confirmLabel, focused = cursor == 0, danger = true,
+                ChoicePill(confirmLabel, focused = cursor == 0, danger = danger,
                     onClick = { onSelect(0); onConfirm() })
                 Spacer(Modifier.width(14.dp))
-                ChoicePill("Cancel", focused = cursor == 1, danger = false,
+                ChoicePill(cancelLabel, focused = cursor == 1, danger = false,
                     onClick = { onSelect(1); onCancel() })
             }
             Spacer(Modifier.height(20.dp))
             Text(
-                "D-pad to choose  ·  A to confirm  ·  B to cancel",
+                if (mustAnswer) "D-pad to choose  ·  A to answer"
+                else "D-pad to choose  ·  A to confirm  ·  B to cancel",
                 color = theme.textSecondary, fontSize = 13.sp,
             )
         }

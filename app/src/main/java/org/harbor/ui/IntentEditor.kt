@@ -49,41 +49,6 @@ data class IntentEditorState(
  * indistinguishable from success if you only check that something started.
  */
 @Composable
-fun VerifyDialog(gameTitle: String, onAnswer: (Boolean) -> Unit) {
-    val theme = LocalTheme.current
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.7f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth(0.6f)
-                .clip(RoundedCornerShape(14.dp))
-                .background(theme.surface)
-                .padding(24.dp)
-        ) {
-            Text("Did the game actually load?", color = theme.textPrimary,
-                fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "\"$gameTitle\" should have started playing. If the emulator only " +
-                    "opened to its own menu, that is a No.",
-                color = theme.textSecondary, fontSize = 13.sp,
-            )
-            Spacer(Modifier.height(20.dp))
-            Row {
-                EPill("Yes, it played") { onAnswer(true) }
-                Spacer(Modifier.width(12.dp))
-                EPill("No") { onAnswer(false) }
-            }
-        }
-    }
-}
-
-
-@Composable
 private fun EPill(label: String, onClick: () -> Unit) {
     val theme = LocalTheme.current
     Box(

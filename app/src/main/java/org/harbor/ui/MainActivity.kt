@@ -90,6 +90,8 @@ class MainActivity : ComponentActivity() {
     private var editingSpec by mutableStateOf<org.harbor.data.LaunchSpec?>(null)
     /** Set while a test launch is out; answered when the user comes back. */
     private var verifyFor by mutableStateOf<Pair<String, String>?>(null)
+    /** 0 = "Yes, it played", 1 = "No". Opens on No: an unanswered launch most likely failed. */
+    private var verifyCursor by mutableStateOf(1)
     /** Theme name awaiting "are you sure?" before its file is deleted. */
     private var removeThemeFor by mutableStateOf<String?>(null)
     /**
@@ -209,7 +211,19 @@ class MainActivity : ComponentActivity() {
                 val ed = editingId
                 val vf = verifyFor
                 if (vf != null) {
-                    VerifyDialog(vf.second) { ok -> answerVerify(ok) }
+                    ConfirmDialog(
+                        title = "Did the game actually load?",
+                        message = "\"" + vf.second + "\" should have started playing. " +
+                            "If the emulator only opened to its own menu, that is a No.",
+                        confirmLabel = "Yes, it played",
+                        cancelLabel = "No",
+                        danger = false,
+                        mustAnswer = true,
+                        cursor = verifyCursor,
+                        onSelect = { verifyCursor = it },
+                        onConfirm = { answerVerify(true) },
+                        onCancel = { answerVerify(false) },
+                    )
                 } else if (onboardStep != null && !showSettings && !showAppPicker) {
                     val st = onboardStep!!
                     val node = Onboarding.node(st, onboardingState(), onboardActions)
@@ -364,7 +378,7 @@ class MainActivity : ComponentActivity() {
         val id = prefs.getString(KEY_VERIFY_ID, null)
         val title = prefs.getString(KEY_VERIFY_TITLE, null)
         if (id != null && title != null) {
-            verifyFor = id to title
+            verifyCursor = 1; verifyFor = id to title
             editingId = id
             editingSpec = loadProfileById(id)?.launch
         }
@@ -560,6 +574,11 @@ class MainActivity : ComponentActivity() {
                     Nav.RIGHT, Nav.DOWN -> 1
                     else -> removeThemeCursor
                 }
+                verifyFor != null -> verifyCursor = when (nav) {
+                    Nav.LEFT, Nav.UP -> 0
+                    Nav.RIGHT, Nav.DOWN -> 1
+                    else -> verifyCursor
+                }
                 prompt != null -> {
                     val rows = keyboardRows(promptSymbols)
                     kbRow = kbRow.coerceIn(0, rows.size - 1)
@@ -620,6 +639,8 @@ class MainActivity : ComponentActivity() {
                 val name = removeThemeFor!!
                 removeThemeFor = null
                 if (removeThemeCursor == 0) confirmRemoveColorTheme(name)
+            } else if (verifyFor != null) {
+                answerVerify(verifyCursor == 0)
             } else if (prompt != null) {
                 pressKey()
             } else if (contextMenuFor != null) {
