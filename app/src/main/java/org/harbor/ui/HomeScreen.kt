@@ -385,7 +385,12 @@ private fun CoverTile(
                 AsyncImage(
                     model = cover,
                     contentDescription = game.title,
-                    contentScale = ContentScale.Crop,
+                    // Fit, not Crop. A console's tile ratio is one number but its
+                    // covers are not all exactly that, and cropping takes the bite
+                    // out of the edges — which is where box art puts the title.
+                    // A thin letterbox on the surfaceVariant behind it is the
+                    // cheaper loss.
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize(),
                 )
             } else if (appIcon != null) {
