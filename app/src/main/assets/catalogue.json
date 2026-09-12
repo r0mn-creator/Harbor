@@ -44,7 +44,7 @@
       "name": "Sony - PlayStation 2",
       "short_name": "PS2",
       "year": 2000,
-      "aspect_ratio": "3:4",
+      "aspect_ratio": "7:10",
       "extensions": [
         "iso",
         "chd",
@@ -73,7 +73,7 @@
       "name": "Nintendo - GameCube",
       "short_name": "GC",
       "year": 2001,
-      "aspect_ratio": "3:4",
+      "aspect_ratio": "5:7",
       "extensions": [
         "iso",
         "gcm",
@@ -307,7 +307,7 @@
       "name": "Nintendo - Wii",
       "short_name": "WII",
       "year": 2006,
-      "aspect_ratio": "3:4",
+      "aspect_ratio": "5:7",
       "extensions": [
         "iso",
         "wbfs",
@@ -379,7 +379,7 @@
       "name": "Nintendo - Wii U",
       "short_name": "WIIU",
       "year": 2012,
-      "aspect_ratio": "3:4",
+      "aspect_ratio": "5:7",
       "extensions": [
         "wud",
         "wux",
